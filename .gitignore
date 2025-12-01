@@ -1,0 +1,11 @@
+# Images
+*.png
+*.jpg
+*.jpeg
+*.gif
+
+# CSV data files
+*.csv
+
+# Temporary files
+*.html

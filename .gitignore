@@ -9,3 +9,6 @@
 
 # Temporary files
 *.html
+
+# Claude Code
+.claude/

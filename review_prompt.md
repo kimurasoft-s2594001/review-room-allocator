@@ -10,22 +10,30 @@
 
 ## 出力フォーマット
 
+### 基本形式
+```
+チーム,種別 URL PO名
+```
+- **PO名**: 人名（太郎、花子など）または記号（A、B、PO1など）で表記
+- **複数PO**: カンマ区切りで表記（例：`太郎,花子` または `A,B` または `PO1,PO2`）
+
 ### 対面Review
 ```
 部屋1
-T1,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 担当PO名
+T1,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 太郎
+T1,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 太郎,花子
 
 部屋2
-T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 担当PO名
-T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 担当PO名
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 花子
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 次郎,三郎
 ```
 
 ### 回覧Review
 ```
-T3,主0 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 担当PO名
-T3,主0 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 担当PO名
-T5,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 担当PO名
-T5,主0 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 担当PO名
+T3,主0 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 太郎
+T3,主0 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 太郎,花子
+T5,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 花子
+T5,主0 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX 次郎,三郎
 ```
 
 ## データ抽出ルール
@@ -138,17 +146,18 @@ https://docomo-common.atlassian.net/browse/{課題キー}
 - 部屋名の後に **POの対応順序を必ず明記**
 - POごとにチケットをまとめて出力
 - 形式: `部屋N（PO-X → PO-Y の順で対応）`
+- チケット形式: `チーム,種別 URL PO名`（PO名は単一または複数）
 
 ```
 部屋1（B → C の順で対応）
-T1,主1 https://... B
-T1,主1 https://... C
-T5,主1 https://... C
+T1,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX B
+T1,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX C
+T5,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX C
 
 部屋2（C → B の順で対応）
-T3,主1 https://... C
-T3,支援とPOのみ https://... B
-T3,支援とPOのみ https://... B
+T3,主1 https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX C
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX B
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-XXXXX B,C
 ```
 
 #### PO移動案内
@@ -364,3 +373,173 @@ PO-C: 部屋2 → 部屋1
 3. **Jira CSVデータ**（全行をそのまま貼り付け）
 
 上記の情報を元に、指定されたフォーマットで会議室割り当て案を生成してください。
+
+---
+
+## 再分配機能
+
+### 概要
+初回の割り当て案を各チームに確認後、変更が必要な場合に再分配を行う機能です。
+ユーザーが現在の割り当て状態のスクリーンショットを提供し、変更内容を指示することで、新しい割り当て案を生成します。
+
+### 使用シーン
+- チケットの延期・取消・追加があった場合
+- 説明者の都合により部屋の変更が必要な場合
+- POやファシリテータの変更があった場合
+- 部屋の統合・分割が必要な場合
+
+### 入力データ
+1. **現在の割り当て状態のスクリーンショット**
+2. **変更内容の指示**（例：「DPCAPP-XXXXXを削除」「DPCAPP-YYYYYを追加」）
+
+### スクリーンショットの解析方法
+
+スクリーンショットには通常、以下の情報が含まれています：
+
+| 列 | 内容 |
+|----|------|
+| 部屋No | 部屋番号（1, 2, 3...） |
+| レビュー対象 | チケット情報（チーム、種別、チケットキー、タイトル、ステータス、説明者） |
+| 担当者 | ファシリテータ、DevTmチーム |
+| 部屋リンク | 会議室リンク |
+
+**解析する項目**:
+```
+- 部屋番号
+- チーム略称（T1, T2, T3, T4, T5）
+- Review種別（主1, 支援とPOのみ）
+- チケットキー（DPCAPP-XXXXX）
+- ステータス（SPレビュー完了、DEV修正済み など）
+- 説明者名
+- ファシリテータ
+- 担当DevTmチーム
+```
+
+### スクリーンショット解析例
+
+**入力画像から読み取り → 標準フォーマットに変換**:
+
+スクリーンショットから以下の情報を抽出し、標準フォーマット（`チーム,種別 URL PO名`）に変換する。
+※ PO名は人名（太郎、花子など）または記号（A、B、PO1など）で表記。複数POの場合はカンマ区切り。
+
+```
+部屋1（※全体共有実施）
+T3,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10233 太郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10027 太郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10174 太郎
+T1,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10225 太郎
+T1,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10226 太郎
+T1,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-9562 花子,次郎
+
+部屋2
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-8934 三郎
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10212 花子
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10043 四郎,五郎,六子
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-6156 四郎
+
+部屋3
+T4,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10231 六子,七郎,八郎,九子
+T5,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10190 七郎,十郎
+T5,主1 https://docomo-common.atlassian.net/browse/DPCAPP-9850 七郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-9662 十一,十郎,次郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-6151 七郎,十二子
+```
+
+### 再分配の実行手順
+
+1. **現状把握**: スクリーンショットから現在の割り当て状態を解析
+2. **変更内容の確認**: ユーザーからの変更指示を確認
+3. **影響範囲の特定**: 変更によって影響を受ける部屋・チームを特定
+4. **再分配案の作成**: 以下のルールに従って再分配
+   - 既存の部屋構成をできるだけ維持
+   - 変更が必要な部分のみ調整
+   - 交差配置アルゴリズムを適用（必要な場合）
+   - 説明者の考慮を再チェック
+5. **出力**: 変更後の割り当て案を標準フォーマットで出力
+
+### 変更指示の例
+
+```
+【削除】
+- DPCAPP-10233を削除（延期のため）
+
+【追加】
+- DPCAPP-10400を部屋1に追加（T2,主1, PO=B）
+
+【移動】
+- DPCAPP-10027を部屋1から部屋2に移動
+
+【部屋変更】
+- 部屋2と部屋3を統合
+```
+
+### 再分配後の出力フォーマット
+
+再分配後は、**変更サマリー**を先頭に追加し、その後は通常の出力フォーマットと同一：
+
+```
+# Review割り当て案（再分配） - {Review実施日}
+
+================================================================================
+【変更サマリー】
+================================================================================
+
+■ 削除されたチケット:
+- DPCAPP-10233（部屋1から削除）
+
+■ 追加されたチケット:
+- DPCAPP-10400（部屋1に追加）
+
+■ 移動されたチケット:
+- DPCAPP-10027（部屋1 → 部屋2）
+
+■ 部屋構成の変更:
+- なし（または変更内容を記載）
+
+
+================================================================================
+【対面Review - 会議室割り当て】
+================================================================================
+
+部屋1（※全体共有実施）
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10027 太郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10174 太郎
+T1,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10225 太郎
+T1,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10226 太郎
+T1,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-9562 花子,次郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10400 太郎 ← 追加
+
+部屋2
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-8934 三郎
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10212 花子
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-10043 四郎,五郎,六子
+T3,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-6156 四郎
+
+部屋3
+T4,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10231 六子,七郎,八郎,九子
+T5,主1 https://docomo-common.atlassian.net/browse/DPCAPP-10190 七郎,十郎
+T5,主1 https://docomo-common.atlassian.net/browse/DPCAPP-9850 七郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-9662 十一,十郎,次郎
+T2,主1 https://docomo-common.atlassian.net/browse/DPCAPP-6151 七郎,十二子
+
+
+================================================================================
+【PO移動案内】
+================================================================================
+
+{通常フォーマットと同一}
+
+
+================================================================================
+【説明者注意】
+================================================================================
+
+{通常フォーマットと同一}
+
+
+================================================================================
+【注意事項】
+================================================================================
+
+{通常フォーマットと同一}
+```

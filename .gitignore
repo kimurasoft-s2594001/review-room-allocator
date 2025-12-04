@@ -7,8 +7,14 @@
 # CSV data files
 *.csv
 
+# PDF files
+*.pdf
+
 # Temporary files
 *.html
 
 # Claude Code
 .claude/
+
+# Data directory (contains input/output files)
+data/

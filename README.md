@@ -12,7 +12,7 @@
 
 ```
 review-room-allocator/
-├── Review会議室割り当て案作成プロンプト.md  # 主提示词文件（794行）
+├── SPレビュー会議室割り当て案作成プロンプト.md  # 主提示词文件（794行）
 ├── data/                                     # 输入输出文件夹（已gitignore）
 │   ├── Jira.csv                             # Jira导出数据
 │   ├── *.pdf                                # 之前的Review结果
@@ -164,7 +164,7 @@ T2,支援とPOのみ https://docomo-common.atlassian.net/browse/DPCAPP-8936 鎌�
 | yoshitaka harada | 原田 |
 | ... | ... |
 
-完整映射表见 `Review会議室割り当て案作成プロンプト.md` 文件。
+完整映射表见 `SPレビュー会議室割り当て案作成プロンプト.md` 文件。
 
 ## 常见错误和修正
 

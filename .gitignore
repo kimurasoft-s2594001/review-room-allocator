@@ -16,5 +16,8 @@
 # Claude Code
 .claude/
 
+# GitHub workflows
+.github/
+
 # Data directory (contains input/output files)
 data/

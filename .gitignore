@@ -13,9 +13,6 @@
 # Temporary files
 *.html
 
-# Claude Code
-.claude/
-
 # GitHub workflows
 .github/
 

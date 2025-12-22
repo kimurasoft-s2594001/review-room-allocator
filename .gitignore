@@ -18,3 +18,12 @@
 
 # Data directory (contains input/output files)
 data/
+
+# Google Calendar API credentials (敏感情報)
+credentials.json
+token.json
+data/credentials.json
+data/token.json
+
+# Claude Code local settings
+.claude/settings.local.json
